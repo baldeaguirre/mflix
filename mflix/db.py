@@ -262,12 +262,27 @@ def get_movie(id):
         Embed the joined comments in a new field called "comments".
         """
 
-        # TODO: Get Comments
+        # Get Comments
         # Implement the required pipeline.
         pipeline = [
             {
                 "$match": {
                     "_id": ObjectId(id)
+                }
+            },
+            {
+                "$lookup": {
+                    "from": 'comments',
+                    "let": { 'id': '$_id' },
+                    "pipeline": [
+                        { '$match':
+                            { '$expr': { '$eq': [ '$movie_id', '$$id' ] } }
+                        },
+                        {
+                            "$sort": {"date": -1}
+                        }
+                    ],
+                    "as": 'comments'
                 }
             }
         ]
@@ -328,9 +343,15 @@ def add_comment(movie_id, user, comment, date):
 
     Name and email must be retrieved from the "user" object.
     """
-    # TODO: Create/Update Comments
+    # Create/Update Comments
     # Construct the comment document to be inserted into MongoDB.
-    comment_doc = { "some_field": "some_value" }
+    comment_doc = {
+        "name": user.name,
+        "email": user.email,
+        "movie_id": ObjectId(movie_id),
+        "text": comment,
+        "date": date
+    }
     return db.comments.insert_one(comment_doc)
 
 
@@ -340,12 +361,12 @@ def update_comment(comment_id, user_email, text, date):
     based by both comment _id field as well as the email field to doubly ensure
     the user has permission to edit this comment.
     """
-    # TODO: Create/Update Comments
+    # Create/Update Comments
     # Use the user_email and comment_id to select the proper comment, then
     # update the "text" and "date" of the selected comment.
     response = db.comments.update_one(
-        { "some_field": "some_value" },
-        { "$set": { "some_other_field": "some_other_value" } }
+        { "email": user_email, "_id": ObjectId(comment_id) },
+        { "$set": { "text": text, "date": date } }
     )
 
     return response
@@ -412,13 +433,14 @@ def add_user(name, email, hashedpw):
     try:
         # User Management
         # Insert a user with the "name", "email", and "password" fields.
-        # TODO: Durable Writes
+        # Durable Writes
         # Use a more durable Write Concern for this operation.
-        db.users.insert_one({
+        new_user = {
             "name": name,
             "email": email,
             "password": hashedpw
-        })
+        }
+        db.users.with_options(write_concern=WriteConcern(w="majority")).insert_one(new_user)
         return {"success": True}
     except DuplicateKeyError:
         return {"error": "A user with the given email already exists."}
@@ -508,11 +530,11 @@ def update_prefs(email, prefs):
         reflect the information in prefs.
         """
 
-        # TODO: User preferences
+        # User preferences
         # Use the data in "prefs" to update the user's preferences.
         response = db.users.update_one(
-            { "some_field": "some_value" },
-            { "$set": { "some_other_field": "some_other_value" } }
+            { "email": email },
+            { "$set": { "preferences": prefs } }
         )
         if response.matched_count == 0:
             return {'error': 'no user found'}
