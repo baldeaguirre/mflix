@@ -385,9 +385,11 @@ def delete_comment(comment_id, user_email):
     this user has permission to delete this comment, and then delete it.
     """
 
-    # TODO: Delete Comments
+    # Delete Comments
     # Use the user_email and comment_id to delete the proper comment.
-    response = db.comments.delete_one( { "_id": ObjectId(comment_id) } )
+    response = db.comments.delete_one( 
+        { "email": user_email, "_id": ObjectId(comment_id) } 
+        )
     return response
 
 
@@ -558,11 +560,18 @@ def most_active_commenters():
 
     No field projection necessary.
     """
-    # TODO: User Report
+    # User Report
     # Return the 20 users who have commented the most on MFlix.
-    pipeline = []
+    pipeline = [
+        {
+            "$sortByCount": "$email"
+        },
+        {
+            "$limit": 20
+        }
+    ]
 
-    rc = db.comments.read_concern # you may want to change this read concern!
+    rc = ReadConcern(level="majority")
     comments = db.comments.with_options(read_concern=rc)
     result = comments.aggregate(pipeline)
     return list(result)
