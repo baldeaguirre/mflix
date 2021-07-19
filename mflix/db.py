@@ -290,7 +290,7 @@ def get_movie(id):
         movie = db.movies.aggregate(pipeline).next()
         return movie
 
-    # TODO: Error Handling
+    # Error Handling
     # If an invalid ID is passed to `get_movie`, it should return None.
     except (StopIteration) as _:
 
@@ -304,8 +304,8 @@ def get_movie(id):
 
         return None
 
-    except Exception as e:
-        return {}
+    except (InvalidId) as e:
+        return None
 
 
 def get_all_genres():
