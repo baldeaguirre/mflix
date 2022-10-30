@@ -28,12 +28,12 @@ jsonschema==3.1.1
 jupyter==1.0.0
 jupyter-client==5.3.1
 jupyter-console==6.0.0
-jupyter-core==4.4.0
+jupyter-core==4.11.2
 MarkupSafe==1.1.1
 mccabe==0.6.1
 mistune==2.0.3
 more-itertools==7.2.0
-nbconvert==6.3
+nbconvert==6.5.1
 nbformat==4.4.0
 notebook==6.4.12
 pandocfilters==1.4.2
